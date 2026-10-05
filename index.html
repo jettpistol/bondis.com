@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terminales · Bondis.com</title>
+    <meta name="description" content="Mapa de las terminales de los colectivos de Buenos Aires." />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/">Bondis<span>.com</span></a>
+      <nav class="nav">
+        <a href="/" aria-current="page">Terminales</a>
+      </nav>
+      <label class="toggle">
+        <input type="checkbox" id="routes-toggle" />
+        <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+        <span class="toggle-label">Mostrar recorridos</span>
+      </label>
+    </header>
+
+    <main class="map-wrap">
+      <div id="map" aria-label="Mapa de terminales de colectivos"></div>
+      <div id="status" class="status" role="status" hidden></div>
+    </main>
+
+    <aside id="panel" class="panel" aria-hidden="true" aria-labelledby="panel-title">
+      <header class="panel-head">
+        <div class="panel-badge" id="panel-badge"></div>
+        <div class="panel-meta">
+          <h2 id="panel-title"></h2>
+          <p id="panel-sub"></p>
+        </div>
+        <button class="panel-close" id="panel-close" type="button" aria-label="Cerrar">×</button>
+      </header>
+      <div class="panel-body" id="panel-body"></div>
+    </aside>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
