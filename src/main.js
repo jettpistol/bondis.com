@@ -25,7 +25,9 @@ const km = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 });
 const darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
 const map = L.map('map', { zoomControl: false }).setView(BA_CENTER, 11);
 L.control.zoom({ position: 'bottomleft' }).addTo(map);
-L.tileLayer(`https://{s}.basemaps.cartocdn.com/${darkMode ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`, {
+// CARTO requires an API key on basemap tiles (set VITE_CARTO_KEY in .env).
+const cartoKey = import.meta.env.VITE_CARTO_KEY;
+L.tileLayer(`https://{s}.basemaps.cartocdn.com/${darkMode ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png${cartoKey ? `?key=${cartoKey}` : ''}`, {
   maxZoom: 20,
   subdomains: 'abcd',
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
