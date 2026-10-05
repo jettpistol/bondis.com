@@ -88,10 +88,26 @@ html, body {
 }
 .status.error { border-color: var(--accent); }
 
+/* Jurisdiction filter, floating over the map */
+.filters {
+  position: absolute; top: 12px; left: 12px; z-index: 500;
+  display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100vw - 24px);
+}
+.filter {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  font-family: inherit; font-weight: 600; font-size: 13px; cursor: pointer;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.12);
+}
+.filter[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.filter-count { font-weight: 500; opacity: 0.7; font-variant-numeric: tabular-nums; }
+
 /* Terminal pins (placeholder design): one chip per line ending there */
 .pin-icon { background: none; border: none; }
 .pin {
-  display: flex; gap: 2px; width: max-content;
+  display: flex; flex-wrap: wrap; gap: 2px; width: max-content;
+  max-width: 200px; /* big hubs wrap into rows of ~6 */
   padding: 2px; background: #fff; border-radius: 7px;
   box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
   transform: translate(-50%, -100%);
@@ -101,6 +117,21 @@ html, body {
   content: ""; position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%);
   border: 5px solid transparent; border-top-color: #fff;
 }
+.dot {
+  display: grid; place-items: center;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--pin-color, var(--accent));
+  border: 2px solid #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.4);
+  transform: translate(-50%, -50%);
+  color: #fff; font-size: 10px; font-weight: 800; line-height: 1;
+  cursor: pointer;
+}
+.dot-multi {
+  width: auto; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 10px;
+  background: var(--ink); color: var(--surface);
+}
+.pin-icon:hover .dot { transform: translate(-50%, -50%) scale(1.25); }
+
 .chip {
   min-width: 30px; height: 22px; padding: 0 5px;
   border: 0; border-radius: 5px;
@@ -155,6 +186,12 @@ html, body {
 }
 .branch:hover { border-color: var(--pin-color, var(--accent)); }
 .branch[aria-pressed="true"] { background: var(--pin-color, var(--accent)); border-color: transparent; color: #fff; }
+
+.branch-info {
+  margin: 0; padding: 8px 16px; font-size: 13px; color: var(--muted);
+  border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums;
+}
+.branch-info[hidden] { display: none; }
 
 .panel-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .panel-body iframe { flex: 1; width: 100%; border: 0; background: #fff; }
