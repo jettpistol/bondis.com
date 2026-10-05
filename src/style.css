@@ -206,3 +206,10 @@ html, body {
   .topbar { justify-content: space-between; }
   .toggle-label { font-size: 13px; }
 }
+
+/* Lines under the cursor when routes are shown */
+.leaflet-container.over-route { cursor: pointer; }
+.route-chips { display: flex; flex-wrap: wrap; gap: 3px; max-width: 220px; }
+.route-tip { padding: 3px; }
+.route-tip .chip { cursor: default; }
+.route-pick .leaflet-popup-content { margin: 6px; }

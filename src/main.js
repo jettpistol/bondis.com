@@ -200,12 +200,9 @@ async function showAllRoutes() {
     const layer = L.geoJSON(fc, {
       renderer: routeRenderer,
       style: { color: lines.get(line).color, weight: 2, opacity: activeLine ? ROUTE_OPACITY_DIMMED : ROUTE_OPACITY },
-    })
-      .on('click', (e) => {
-        L.DomEvent.stopPropagation(e);
-        openPanel(line);
-      })
-      .bindTooltip(`Línea ${line}`, { sticky: true });
+      interactive: false, // hover and click go through routesAt(), which sees every overlapping line
+    });
+    indexRoutes(line, fc);
     routeLayers.set(line, layer);
   }));
   const failed = missing.filter((_, i) => results[i].status === 'rejected');
@@ -219,8 +216,109 @@ async function showAllRoutes() {
 
 toggle.addEventListener('change', () => {
   if (toggle.checked) showAllRoutes();
-  else allRoutesLayer.remove();
+  else {
+    allRoutesLayer.remove();
+    routeTip.remove();
+  }
 });
+
+// ---------- Routes under the cursor ----------
+// Many lines share avenues (34 and 166 on Juan B. Justo), so only the top one
+// would ever get the hover or click. A grid of route segments finds them all.
+const GRID_CELL = 0.002; // degrees, about 200 m
+const HIT_PX = 6;
+const segmentGrid = new Map(); // "x:y" -> [line, lng1, lat1, lng2, lat2][]
+const cellOf = (deg) => Math.floor(deg / GRID_CELL);
+
+function indexRoutes(line, fc) {
+  for (const { geometry } of fc.features) {
+    const parts = geometry.type === 'MultiLineString' ? geometry.coordinates : [geometry.coordinates];
+    for (const coords of parts) {
+      for (let i = 1; i < coords.length; i++) {
+        const [x1, y1] = coords[i - 1];
+        const [x2, y2] = coords[i];
+        const seg = [line, x1, y1, x2, y2];
+        for (let cx = cellOf(Math.min(x1, x2)); cx <= cellOf(Math.max(x1, x2)); cx++) {
+          for (let cy = cellOf(Math.min(y1, y2)); cy <= cellOf(Math.max(y1, y2)); cy++) {
+            const key = `${cx}:${cy}`;
+            if (!segmentGrid.has(key)) segmentGrid.set(key, []);
+            segmentGrid.get(key).push(seg);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Visible lines with a route within HIT_PX pixels of latlng, in number order.
+function routesAt(latlng) {
+  const { lat, lng } = latlng;
+  const cos = Math.cos((lat * Math.PI) / 180);
+  const metersPerPx = (40075016.686 * cos) / 2 ** (map.getZoom() + 8);
+  const tol = HIT_PX * metersPerPx;
+  // Work in local meters around the cursor.
+  const mx = 111320 * cos;
+  const my = 110540;
+  const reach = Math.ceil(tol / my / GRID_CELL);
+  const hits = new Set();
+  for (let cx = cellOf(lng) - reach; cx <= cellOf(lng) + reach; cx++) {
+    for (let cy = cellOf(lat) - reach; cy <= cellOf(lat) + reach; cy++) {
+      for (const [line, x1, y1, x2, y2] of segmentGrid.get(`${cx}:${cy}`) ?? []) {
+        if (hits.has(line) || !isVisible(line)) continue;
+        const ax = (x1 - lng) * mx, ay = (y1 - lat) * my;
+        const bx = (x2 - lng) * mx, by = (y2 - lat) * my;
+        const dx = bx - ax, dy = by - ay;
+        const len2 = dx * dx + dy * dy;
+        const t = len2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
+        if (Math.hypot(ax + t * dx, ay + t * dy) <= tol) hits.add(line);
+      }
+    }
+  }
+  return [...hits].sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+}
+
+const routeChips = (found) => found
+  .map((line) => `<button type="button" class="chip" data-line="${line}" style="--pin-color:${lines.get(line).color}">${line}</button>`)
+  .join('');
+
+const routeTip = L.tooltip({ direction: 'top', offset: [0, -8], className: 'route-tip' });
+let hoverFrame;
+map.on('mousemove', (e) => {
+  cancelAnimationFrame(hoverFrame);
+  hoverFrame = requestAnimationFrame(() => {
+    const found = map.hasLayer(allRoutesLayer) ? routesAt(e.latlng) : [];
+    map.getContainer().classList.toggle('over-route', found.length > 0);
+    if (!found.length) {
+      routeTip.remove();
+      return;
+    }
+    routeTip.setLatLng(e.latlng).setContent(`<div class="route-chips">${routeChips(found)}</div>`);
+    if (!map.hasLayer(routeTip)) routeTip.addTo(map);
+  });
+});
+map.on('mouseout', () => {
+  cancelAnimationFrame(hoverFrame);
+  routeTip.remove();
+});
+
+// One line opens its panel; several shared ones ask which.
+function pickRouteAt(latlng) {
+  const found = map.hasLayer(allRoutesLayer) ? routesAt(latlng) : [];
+  if (found.length === 1) openPanel(found[0]);
+  if (found.length < 2) return found.length > 0;
+  routeTip.remove();
+  const popup = L.popup({ className: 'route-pick', closeButton: false })
+    .setLatLng(latlng)
+    .setContent(`<div class="route-chips">${routeChips(found)}</div>`)
+    .openOn(map);
+  popup.getElement().addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    map.closePopup(popup);
+    openPanel(chip.dataset.line);
+  });
+  return true;
+}
 
 // ---------- Side panel ----------
 const panel = document.getElementById('panel');
@@ -345,7 +443,7 @@ function closePanel() {
 
 document.getElementById('panel-close').addEventListener('click', closePanel);
 document.addEventListener('keydown', (e) => e.key === 'Escape' && closePanel());
-map.on('click', closePanel);
+map.on('click', (e) => pickRouteAt(e.latlng) || closePanel());
 
 // ---------- Boot ----------
 fetch('/data/lines.json')
