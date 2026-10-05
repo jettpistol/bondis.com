@@ -1,3 +1,6 @@
+// CURRENTLY UNUSED: routes now come from the official data (see scripts/build-routes.mjs).
+// Kept as a fallback for lines missing from that data.
+
 // Bus routes come from OpenStreetMap (free, ODbL) via the public Overpass API.
 // Each line usually has several route relations (ida / vuelta / ramales);
 // we draw every way that belongs to one.

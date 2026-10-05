@@ -88,27 +88,29 @@ html, body {
 }
 .status.error { border-color: var(--accent); }
 
-/* Line-number pins (placeholder design) */
+/* Terminal pins (placeholder design): one chip per line ending there */
+.pin-icon { background: none; border: none; }
 .pin {
-  display: grid; place-items: center;
-  min-width: 34px; height: 26px; padding: 0 6px;
-  background: var(--pin-color, var(--accent));
-  color: #fff; font-weight: 800; font-size: 14px; line-height: 1;
-  border: 2px solid #fff; border-radius: 6px;
+  display: flex; gap: 2px; width: max-content;
+  padding: 2px; background: #fff; border-radius: 7px;
   box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
-  cursor: pointer;
-  transform: translate(calc(-50% + var(--dx, 0px)), -100%);
+  transform: translate(-50%, -100%);
   position: relative;
-  white-space: nowrap;
-  width: max-content;
 }
 .pin::after {
-  content: ""; position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%);
+  content: ""; position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%);
   border: 5px solid transparent; border-top-color: #fff;
 }
-.pin-icon { background: none; border: none; }
-.pin-icon:hover .pin, .pin.is-active { transform: translate(calc(-50% + var(--dx, 0px)), -100%) scale(1.15); z-index: 1; }
-.leaflet-marker-icon:focus-visible .pin { outline: 3px solid var(--ink); outline-offset: 2px; }
+.chip {
+  min-width: 30px; height: 22px; padding: 0 5px;
+  border: 0; border-radius: 5px;
+  background: var(--pin-color, var(--accent)); color: #fff;
+  font-family: inherit; font-weight: 800; font-size: 13px; line-height: 1;
+  cursor: pointer; transition: transform 0.12s, opacity 0.12s;
+}
+.chip:hover, .chip.is-active { transform: scale(1.12); }
+.chip.is-dimmed { opacity: 0.35; }
+.chip:focus-visible { outline: 3px solid var(--ink); outline-offset: 1px; }
 
 /* ---------- Side panel ---------- */
 .panel {
@@ -139,6 +141,20 @@ html, body {
   font-size: 22px; line-height: 1; cursor: pointer;
 }
 .panel-close:hover { background: var(--bg); }
+
+.branch-picker {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding: 10px 16px; border-bottom: 1px solid var(--line);
+}
+.branch-picker[hidden] { display: none; }
+.branch-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-right: 4px; }
+.branch {
+  min-width: 32px; height: 28px; padding: 0 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: transparent; color: var(--ink);
+  font-family: inherit; font-weight: 600; font-size: 13px; cursor: pointer;
+}
+.branch:hover { border-color: var(--pin-color, var(--accent)); }
+.branch[aria-pressed="true"] { background: var(--pin-color, var(--accent)); border-color: transparent; color: #fff; }
 
 .panel-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .panel-body iframe { flex: 1; width: 100%; border: 0; background: #fff; }
