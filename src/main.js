@@ -41,7 +41,8 @@ function openPanel(line) {
   panel.style.setProperty('--pin-color', line.color);
   panelBadge.textContent = line.line;
   panelTitle.textContent = `Línea ${line.line}`;
-  panelSub.textContent = [line.terminal, line.otherEnd].filter(Boolean).join(' ↔ ');
+  panelSub.textContent = [line.terminal, line.otherEnd].filter(Boolean).join(' ↔ ')
+    + (line.coords === 'approx' ? ' · ubicación aproximada' : '');
 
   panelBody.replaceChildren();
   if (line.wikipedia) {
@@ -74,17 +75,30 @@ document.addEventListener('keydown', (e) => e.key === 'Escape' && closePanel());
 map.on('click', closePanel);
 
 // ---------- Terminal pins ----------
+// Lines sharing a terminal (e.g. 10, 17 and 24 in Wilde) get fanned out sideways.
+const PIN_SPACING_PX = 40;
+const siblings = new Map();
+for (const l of LINES) {
+  const key = `${l.lat.toFixed(3)},${l.lng.toFixed(3)}`;
+  siblings.set(key, [...(siblings.get(key) ?? []), l.line]);
+}
+function pinOffset(l) {
+  const group = siblings.get(`${l.lat.toFixed(3)},${l.lng.toFixed(3)}`);
+  return (group.indexOf(l.line) - (group.length - 1) / 2) * PIN_SPACING_PX;
+}
+
 const lines = LINES.map((data, i) => {
   const line = { ...data, color: colorFor(i) };
   const icon = L.divIcon({
     className: 'pin-icon',
-    html: `<div class="pin" style="--pin-color:${line.color}">${line.line}</div>`,
+    html: `<div class="pin" style="--pin-color:${line.color};--dx:${pinOffset(line)}px">${line.line}</div>`,
     iconSize: [0, 0],
   });
   line.marker = L.marker([line.lat, line.lng], {
     icon,
     title: `Línea ${line.line} — ${line.terminal}`,
     keyboard: true,
+    riseOnHover: true,
   })
     .on('click', () => openPanel(line))
     .on('keypress', (e) => e.originalEvent.key === 'Enter' && openPanel(line))
@@ -92,6 +106,8 @@ const lines = LINES.map((data, i) => {
   line.pinEl = () => line.marker.getElement()?.querySelector('.pin');
   return line;
 });
+
+map.fitBounds(L.latLngBounds(lines.map((l) => [l.lat, l.lng])), { padding: [48, 48] });
 
 // ---------- Routes toggle ----------
 const toggle = document.getElementById('routes-toggle');
