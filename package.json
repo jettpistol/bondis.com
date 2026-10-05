@@ -1,0 +1,19 @@
+{
+  "name": "bondis",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "build:data": "node scripts/build-routes.mjs"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "mapshaper": "^0.7.77",
+    "vite": "^8.3.2"
+  }
+}
